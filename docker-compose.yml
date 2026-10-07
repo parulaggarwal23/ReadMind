@@ -1,0 +1,35 @@
+services:
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      DATA_DIR: /app/data
+    volumes:
+      - ./backend/data:/app/data              # clones, raw JSON, indexes, eval results
+      - ./backend/repos.yaml:/app/repos.yaml
+      - hf-cache:/root/.cache/huggingface     # embedding / reranker models
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+  # Optional: local LLM instead of an API key. Set LLM_PROVIDER=ollama and
+  # OLLAMA_URL=http://ollama:11434 in .env, then: docker compose exec ollama ollama pull llama3.1
+  # ollama:
+  #   image: ollama/ollama
+  #   volumes: [ "ollama:/root/.ollama" ]
+  #   ports: [ "11434:11434" ]
+
+volumes:
+  hf-cache:
+  # ollama:

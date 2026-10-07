@@ -1,0 +1,19 @@
+# Final repositories used in the study.
+# Optional per-repo keys can override the defaults below.
+# History limits are intentionally high enough to avoid truncating the selected repositories.
+
+# NOTE: KDE/kio is a read-only GitHub mirror (issues/PRs/reviews live on invent.kde.org),
+# so it will have commits+code but little/no issue/PR/review history. Keep it only if you
+# document this as a limitation; otherwise swap it for e.g. encode/httpx.
+
+defaults:
+  max_commits: 3000
+  max_issues: 500
+  max_prs: 400
+
+repos:
+  - github: seL4/seL4
+  - github: actualbudget/actual
+  - github: KDE/kio
+  - github: CHERIoT-Platform/cheriot-rtos
+  - github: infiniflow/ragflow
