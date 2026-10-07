@@ -42,7 +42,7 @@ export default function App() {
         <div className="brand">
           <div className="logo" aria-hidden>⎇</div>
           <div>
-            <h1>RepoHistory RAG</h1>
+            <h1>ReadMind</h1>
             <p>Evidence-based answers from code, commits, issues, PRs and reviews</p>
           </div>
         </div>
