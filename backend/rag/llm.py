@@ -57,10 +57,24 @@ def _mock(prompt, json_mode):
                            "question": "Why was this changed?", "category": "rationale",
                            "reference_answer": "mock", "key_points": ["mock point"]})
     ids = re.findall(r"^\[((?:code|commit|issue|pr|review|doc):[^\]]+)\]", prompt, re.M)
+    
+    # Simulate LLM Only (no context)
     if not ids:
-        return "I am not certain about the history of this code without more information."
-    return (f"The most relevant evidence is {ids[0]} [{ids[0]}]. "
-            f"Related context appears in [{ids[min(1, len(ids) - 1)]}].\n\nRecommendation: review the cited history first.")
+        return "I am not certain about the history of this code without more information. The authentication logic is not a standard pattern, and without access to the repository's historical context or issue tracker, I cannot definitively explain the architectural decision behind it."
+        
+    has_history = any(i.startswith("commit:") or i.startswith("issue:") or i.startswith("pr:") for i in ids)
+    
+    # Simulate Code Only (has code, but no history)
+    if not has_history:
+        return (f"Based on the provided codebase evidence [{ids[0]}], the authentication logic uses a secure token system and rotates session IDs during login.\n\n"
+                "However, looking purely at the source code, there are no comments explaining *why* this specific approach was chosen over standard JWT tokens. To understand the rationale, we would need to review the historical Pull Requests or Issues associated with this file.")
+                
+    # Simulate Full History (RAG - Code + History)
+    history_id = next((i for i in ids if not i.startswith("code:") and not i.startswith("doc:")), ids[0])
+    code_id = next((i for i in ids if i.startswith("code:")), ids[-1])
+    
+    return (f"Based on the retrieved code [{code_id}] and the historical context from [{history_id}], the authentication logic was implemented this way to resolve a critical security vulnerability.\n\n"
+            f"According to the discussions in [{history_id}], the team discovered a potential session fixation attack vector. As a result, the maintainers explicitly chose to rotate the session ID on every single login attempt. This architectural decision guarantees that older, potentially compromised session tokens cannot be reused maliciously.")
 
 
 def generate(system: str, prompt: str, provider: str | None = None, model: str | None = None,
