@@ -62,7 +62,6 @@ export default function App() {
             >
               <option value="gemini-2.5-flash">gemini · gemini-2.5-flash</option>
               <option value="qwen2.5-coder:7b">ollama · qwen2.5-coder:7b</option>
-              <option value="claude-3-5-sonnet">anthropic · claude-3-5-sonnet</option>
             </select>
           </span>
         </div>
