@@ -60,7 +60,7 @@ export default function App() {
               onChange={(e) => setActiveModel(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'inherit', font: 'inherit', outline: 'none', cursor: 'pointer' }}
             >
-              <option value="gemini-2.5-flash">gemini · gemini-2.5-flash</option>
+              <option value="gemini-3.8-flash">gemini · gemini-3.8-flash</option>
               <option value="qwen2.5-coder:7b">ollama · qwen2.5-coder:7b</option>
             </select>
           </span>
