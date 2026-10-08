@@ -1,0 +1,188 @@
+{
+  "n_questions": 150,
+  "n_rows": 445,
+  "conditions": {
+    "llm_only": {
+      "accuracy": 1.193,
+      "relevance": 1.85,
+      "completeness": 0.08,
+      "hallucination_rate": 0.82,
+      "precision_at_k": null,
+      "recall_at_k": null,
+      "mrr": null,
+      "citation_precision": null,
+      "grounded_ratio": 0.0,
+      "n": 150,
+      "latency_mean_ms": 1322.828,
+      "latency_p50_ms": 681.8,
+      "latency_p95_ms": 1622.455
+    },
+    "code_only": {
+      "accuracy": 1.318,
+      "relevance": 2.45,
+      "completeness": 0.15,
+      "hallucination_rate": 0.71,
+      "precision_at_k": 0.0,
+      "recall_at_k": 0.0,
+      "mrr": 0.0,
+      "citation_precision": 0.2,
+      "grounded_ratio": 0.0272,
+      "n": 148,
+      "latency_mean_ms": 2841.7493,
+      "latency_p50_ms": 2698.35,
+      "latency_p95_ms": 3689.065
+    },
+    "full_history": {
+      "accuracy": 3.15,
+      "relevance": 3.92,
+      "completeness": 0.68,
+      "hallucination_rate": 0.12,
+      "precision_at_k": 0.125,
+      "recall_at_k": 1.0,
+      "mrr": 0.9252,
+      "citation_precision": 1.0,
+      "grounded_ratio": 0.0272,
+      "n": 147,
+      "latency_mean_ms": 9439.7381,
+      "latency_p50_ms": 3097.5,
+      "latency_p95_ms": 4614.19
+    }
+  },
+  "tests": [
+    {
+      "metric": "accuracy",
+      "a": "full_history",
+      "b": "code_only",
+      "n": 145,
+      "mean_a": 3.15,
+      "mean_b": 1.318,
+      "p_value": 0.0001
+    },
+    {
+      "metric": "accuracy",
+      "a": "full_history",
+      "b": "llm_only",
+      "n": 147,
+      "mean_a": 3.15,
+      "mean_b": 1.193,
+      "p_value": 0.0001
+    },
+    {
+      "metric": "accuracy",
+      "a": "code_only",
+      "b": "llm_only",
+      "n": 148,
+      "mean_a": 1.318,
+      "mean_b": 1.193,
+      "p_value": 0.0748
+    },
+    {
+      "metric": "completeness",
+      "a": "full_history",
+      "b": "code_only",
+      "n": 145,
+      "mean_a": 0.68,
+      "mean_b": 0.15,
+      "p_value": 0.0001
+    },
+    {
+      "metric": "completeness",
+      "a": "full_history",
+      "b": "llm_only",
+      "n": 147,
+      "mean_a": 0.68,
+      "mean_b": 0.08,
+      "p_value": 0.0001
+    },
+    {
+      "metric": "hallucination_rate",
+      "a": "full_history",
+      "b": "code_only",
+      "n": 145,
+      "mean_a": 0.12,
+      "mean_b": 0.71,
+      "p_value": 0.0001
+    },
+    {
+      "metric": "hallucination_rate",
+      "a": "full_history",
+      "b": "llm_only",
+      "n": 147,
+      "mean_a": 0.12,
+      "mean_b": 0.82,
+      "p_value": 0.0001
+    },
+    {
+      "metric": "relevance",
+      "a": "full_history",
+      "b": "code_only",
+      "n": 145,
+      "mean_a": 3.92,
+      "mean_b": 2.45,
+      "p_value": 0.0001
+    },
+    {
+      "metric": "relevance",
+      "a": "full_history",
+      "b": "llm_only",
+      "n": 147,
+      "mean_a": 3.92,
+      "mean_b": 1.85,
+      "p_value": 0.0001
+    }
+  ],
+  "per_category": {
+    "bug_history": {
+      "code_only": 1.19,
+      "full_history": 3.25,
+      "llm_only": 1.14
+    },
+    "change_impact": {
+      "code_only": 1.8,
+      "full_history": 2.67,
+      "llm_only": 1.2
+    },
+    "provenance": {
+      "code_only": 1.45,
+      "full_history": 3.64,
+      "llm_only": 1.18
+    },
+    "rationale": {
+      "code_only": 1.43,
+      "full_history": 2.83,
+      "llm_only": 1.31
+    },
+    "rejected_alternative": {
+      "code_only": 1.2,
+      "full_history": 3.6,
+      "llm_only": 1.1
+    }
+  },
+  "per_repo": {
+    "CHERIoT-Platform__cheriot-rtos": {
+      "code_only": 1.3,
+      "full_history": 2.86,
+      "llm_only": 1.2
+    },
+    "KDE__kio": {
+      "code_only": 1.2,
+      "full_history": 3.31,
+      "llm_only": 1.23
+    },
+    "actualbudget__actual": {
+      "code_only": 1.34,
+      "full_history": 3.33,
+      "llm_only": 1.23
+    },
+    "infiniflow__ragflow": {
+      "code_only": 1.28,
+      "full_history": 3.45,
+      "llm_only": 1.2
+    },
+    "seL4__seL4": {
+      "code_only": 1.47,
+      "full_history": 2.8,
+      "llm_only": 1.1
+    }
+  }
+}
