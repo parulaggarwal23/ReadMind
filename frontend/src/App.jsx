@@ -20,6 +20,7 @@ export default function App() {
   const [repo, setRepo] = useState("");
   const [tab, setTab] = useState("knowledge");
   const [health, setHealth] = useState(null);
+  const [activeModel, setActiveModel] = useState("gemini-2.5-flash");
   const [error, setError] = useState("");
   const [evidenceId, setEvidenceId] = useState(null);
 
@@ -54,7 +55,15 @@ export default function App() {
           <RepoSelector repos={repos} value={repo} onChange={setRepo} />
           <span className={`status ${health ? "ok" : "down"}`}>
             <span className="dot" />
-            {health ? `${health.provider} · ${health.model}` : "API offline"}
+            <select 
+              value={activeModel} 
+              onChange={(e) => setActiveModel(e.target.value)}
+              style={{ background: 'transparent', border: 'none', color: 'inherit', font: 'inherit', outline: 'none', cursor: 'pointer' }}
+            >
+              <option value="gemini-2.5-flash">gemini · gemini-2.5-flash</option>
+              <option value="qwen2.5-coder:7b">ollama · qwen2.5-coder:7b</option>
+              <option value="claude-3-5-sonnet">anthropic · claude-3-5-sonnet</option>
+            </select>
           </span>
         </div>
       </header>
