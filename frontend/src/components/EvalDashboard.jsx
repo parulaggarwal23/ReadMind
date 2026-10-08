@@ -24,6 +24,9 @@ const RATE_METRICS = [
   { key: "hallucination_rate", label: "Hallucination rate", better: "lower" },
   { key: "precision_at_k", label: "Evidence precision@k", better: "higher" },
   { key: "recall_at_k", label: "Evidence recall@k", better: "higher" },
+  { key: "token_f1", label: "Token F1 (Overlap)", better: "higher" },
+  { key: "ref_recall", label: "Reference Recall", better: "higher" },
+  { key: "key_points", label: "Key Points Covered", better: "higher" },
 ];
 const SCORE_METRICS = [
   { key: "accuracy", label: "Accuracy", better: "higher" },

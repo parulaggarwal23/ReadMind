@@ -164,7 +164,30 @@ def _read_json(name):
 
 @app.get("/api/eval/summary")
 def eval_summary():
-    return _read_json("summary.json")
+    summary = _read_json("summary.json")
+    
+    # Map friend's custom keys to standard UI keys if needed
+    if "n_questions" not in summary:
+        summary["n_questions"] = max([c.get("n", 0) for c in summary.get("conditions", {}).values()] + [0])
+        
+    for c_id, c_data in summary.get("conditions", {}).items():
+        if "mean" in c_data and "accuracy" not in c_data:
+            c_data["accuracy"] = c_data["mean"]
+    
+    # Merge lexical_summary.json if it exists
+    lex_path = EVAL_DIR / "lexical_summary.json"
+    if lex_path.exists():
+        lex = json.loads(lex_path.read_text(encoding="utf-8"))
+        if "models" in lex and lex["models"]:
+            model_key = list(lex["models"].keys())[0]
+            lex_conds = lex["models"][model_key].get("conditions", {})
+            for c_id, c_data in lex_conds.items():
+                if c_id in summary.get("conditions", {}):
+                    summary["conditions"][c_id]["token_f1"] = c_data.get("token_f1")
+                    summary["conditions"][c_id]["ref_recall"] = c_data.get("ref_recall")
+                    summary["conditions"][c_id]["key_points"] = c_data.get("key_points")
+                    
+    return summary
 
 
 @app.get("/api/eval/results")
