@@ -11,7 +11,7 @@ from config import CORS_ORIGINS, EVAL_DIR, LLM_MODEL, LLM_PROVIDER
 from rag.pipeline import CONDITIONS, answer_question
 from rag.retriever import get_index, list_indexed
 
-app = FastAPI(title="Repository History RAG", version="1.0.0")
+app = FastAPI(title="ReadMind", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
 
 Condition = Literal["llm_only", "code_only", "full_history"]
