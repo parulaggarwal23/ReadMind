@@ -9,3 +9,10 @@ frontend/node_modules/
 frontend/dist/
 .DS_Store
 *.zip
+
+# AI DevOps tooling outputs
+*.scip
+coverage.xml
+.coverage
+backend/test_results.html
+backend/cover_agent_unit_test_runs.db

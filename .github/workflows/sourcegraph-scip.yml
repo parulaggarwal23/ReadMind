@@ -1,0 +1,82 @@
+name: Sourcegraph code navigation (SCIP)
+
+# Builds precise code-intelligence indexes (SCIP) for ReadMind's Python backend and React frontend,
+# so Sourcegraph can do go-to-definition / find-references across the codebase.
+# Upload runs only when the SRC_ENDPOINT + SRC_ACCESS_TOKEN secrets point at a Sourcegraph instance
+# that GitHub can reach. The indexes are always kept as a workflow artifact, so you can upload them
+# to a local Sourcegraph with sourcegraph/upload-scip.sh.
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", "frontend/src/**", ".github/workflows/sourcegraph-scip.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scip:
+    runs-on: ubuntu-latest
+    env:
+      SRC_ENDPOINT: ${{ secrets.SRC_ENDPOINT }}
+      SRC_ACCESS_TOKEN: ${{ secrets.SRC_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install indexers
+        run: npm install -g @sourcegraph/scip-python @sourcegraph/scip-typescript @sourcegraph/src
+
+      # Light deps are enough: scip-python resolves ReadMind's own modules, external symbols stay external.
+      - name: Backend — install light dependencies
+        working-directory: backend
+        run: pip install -r requirements-ci.txt
+
+      - name: Backend — scip-python
+        working-directory: backend
+        run: scip-python index . --project-name=readmind-backend --project-version=${{ github.sha }} --output=index.scip
+
+      - name: Frontend — install
+        working-directory: frontend
+        run: npm install --no-audit --no-fund
+
+      - name: Frontend — scip-typescript
+        working-directory: frontend
+        run: scip-typescript index scip --output index.scip
+
+      - name: Keep indexes as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: readmind-scip-${{ github.sha }}
+          path: |
+            backend/index.scip
+            frontend/index.scip
+          retention-days: 14
+
+      - name: Upload to Sourcegraph
+        if: env.SRC_ENDPOINT != '' && env.SRC_ACCESS_TOKEN != ''
+        run: |
+          src code-intel upload -file=backend/index.scip  -root=backend  \
+            -repo=github.com/${{ github.repository }} -commit=${{ github.sha }} \
+            -github-token=${{ secrets.GITHUB_TOKEN }} -no-progress
+          src code-intel upload -file=frontend/index.scip -root=frontend \
+            -repo=github.com/${{ github.repository }} -commit=${{ github.sha }} \
+            -github-token=${{ secrets.GITHUB_TOKEN }} -no-progress
+
+      - name: Summary
+        run: |
+          {
+            echo "### Sourcegraph SCIP indexes"
+            echo "- backend/index.scip: $(du -h backend/index.scip | cut -f1)"
+            echo "- frontend/index.scip: $(du -h frontend/index.scip | cut -f1)"
+            if [ -n "$SRC_ENDPOINT" ]; then echo "- Uploaded to $SRC_ENDPOINT"; else echo "- Not uploaded (set SRC_ENDPOINT / SRC_ACCESS_TOKEN secrets). Download the artifact and run sourcegraph/upload-scip.sh"; fi
+          } >> "$GITHUB_STEP_SUMMARY"

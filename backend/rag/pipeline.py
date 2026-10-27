@@ -1,11 +1,11 @@
-"""Answering pipeline for the three experimental conditions."""
+"""Answering pipeline for the three experimental conditions (+ ablation), runnable through ReadMind's
+native pipeline or the LangChain / LlamaIndex engines in rag/frameworks/."""
 import time
 
 from config import LLM_MODEL, LLM_PROVIDER, TOP_K_FINAL
 from rag.citations import verify_citations
 from rag.guardrails import run_guardrails
 from rag.llm import generate
-from rag.retriever import get_index
 
 CONDITIONS = {
     "llm_only": {"label": "LLM only", "types": None},
@@ -43,9 +43,62 @@ def format_evidence(evidence: list[dict], max_chars=1800) -> str:
     return "\n\n---\n\n".join(blocks)
 
 
-def answer_question(slug: str, question: str, condition: str = "full_history", k: int = TOP_K_FINAL) -> dict:
+ENGINES = {
+    "native": "ReadMind native pipeline",
+    "langchain": "LangChain (LCEL chain over the ReadMind retriever)",
+    "llamaindex": "LlamaIndex (RetrieverQueryEngine over the ReadMind retriever)",
+}
+
+
+def build_result(slug, question, condition, answer, evidence, timings, t0, t1, t2, engine="native") -> dict:
+    """Package an answer into the response shape the API, UI and evaluation all expect.
+    Shared by the native pipeline and the LangChain / LlamaIndex engines so results are comparable."""
+    spec = ALL_CONDITIONS[condition]
+    evidence_cleaned = [{**{k2: v for k2, v in e.items() if k2 != "text"}, "snippet": e["text"][:500]}
+                        for e in evidence]
+    verification = verify_citations(answer, [e["id"] for e in evidence])
+    guardrails = run_guardrails(
+        question=question,
+        answer=answer,
+        evidence=evidence,
+        verification=verification,
+        condition=condition
+    )
+    return {
+        "repo": slug,
+        "condition": condition,
+        "condition_label": spec["label"],
+        "engine": engine,
+        "question": question,
+        "answer": answer,
+        "evidence": evidence_cleaned,
+        "verification": verification,
+        "guardrails": guardrails,
+        "latency_ms": {"retrieval": round((t1 - t0) * 1000, 1), "generation": round((t2 - t1) * 1000, 1),
+                       "total": round((t2 - t0) * 1000, 1), **{k2: round(v, 1) for k2, v in timings.items()}},
+        "model": f"{LLM_PROVIDER}:{LLM_MODEL}",
+    }
+
+
+def get_index(slug):
+    """Imported lazily so this module (and the framework engines) load without chromadb in CI."""
+    from rag.retriever import get_index as _get_index
+    return _get_index(slug)
+
+
+def answer_question(slug: str, question: str, condition: str = "full_history", k: int = TOP_K_FINAL,
+                    engine: str = "native") -> dict:
     if condition not in ALL_CONDITIONS:
         raise ValueError(f"Unknown condition '{condition}'")
+    if engine not in ENGINES:
+        raise ValueError(f"Unknown engine '{engine}'. Choose one of: {', '.join(ENGINES)}")
+    if engine == "langchain":
+        from rag.frameworks.langchain_rag import answer_with_langchain
+        return answer_with_langchain(slug, question, condition, k)
+    if engine == "llamaindex":
+        from rag.frameworks.llamaindex_rag import answer_with_llamaindex
+        return answer_with_llamaindex(slug, question, condition, k)
+
     spec = ALL_CONDITIONS[condition]
     index = get_index(slug)
     repo_name = index.stats.get("github", slug)
@@ -64,28 +117,4 @@ def answer_question(slug: str, question: str, condition: str = "full_history", k
     t1 = time.perf_counter()
     answer = generate(system, prompt)
     t2 = time.perf_counter()
-
-    evidence_cleaned = [{**{k2: v for k2, v in e.items() if k2 != "text"}, "snippet": e["text"][:500]}
-                        for e in evidence]
-    verification = verify_citations(answer, [e["id"] for e in evidence])
-    guardrails = run_guardrails(
-        question=question,
-        answer=answer,
-        evidence=evidence,
-        verification=verification,
-        condition=condition
-    )
-
-    return {
-        "repo": slug,
-        "condition": condition,
-        "condition_label": spec["label"],
-        "question": question,
-        "answer": answer,
-        "evidence": evidence_cleaned,
-        "verification": verification,
-        "guardrails": guardrails,
-        "latency_ms": {"retrieval": round((t1 - t0) * 1000, 1), "generation": round((t2 - t1) * 1000, 1),
-                       "total": round((t2 - t0) * 1000, 1), **{k2: round(v, 1) for k2, v in timings.items()}},
-        "model": f"{LLM_PROVIDER}:{LLM_MODEL}",
-    }
+    return build_result(slug, question, condition, answer, evidence, timings, t0, t1, t2, engine="native")

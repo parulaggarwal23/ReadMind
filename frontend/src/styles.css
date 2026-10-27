@@ -2104,3 +2104,91 @@ td.best {
 
 
 
+
+/* ---------- RAG engine selector (LangChain / LlamaIndex) ---------- */
+.engine-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.answer-head .engine-tag {
+  margin-left: 8px;
+  margin-right: auto;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+
+/* ---------- Sourcegraph code navigation ---------- */
+.sg-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.sg-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+.sg-options {
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.sg-result-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sg-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sg-results li {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+.sg-file-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.sg-path {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-all;
+}
+.sg-symbols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.sg-symbols .chip {
+  text-decoration: none;
+}
+.sg-lines {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  font-size: 12px;
+  overflow-x: auto;
+  white-space: pre;
+}
+.sg-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}

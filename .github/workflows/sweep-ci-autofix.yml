@@ -1,0 +1,62 @@
+name: Sweep CI auto-fix
+
+# When CI fails on main, open (or update) a "Sweep:" issue with the failing log tail.
+# The Sweep GitHub App picks up the issue and opens a fix PR, which then goes through CI and
+# the ReadMind AI review — a fully AI-driven fix loop. Sweep's own PRs are skipped: with
+# gha_enabled in sweep.yaml, Sweep already reads and fixes its own failing checks.
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  open-sweep-issue:
+    if: >
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_URL: ${{ github.event.workflow_run.html_url }}
+      SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Collect failing jobs and logs
+        run: |
+          gh run view "$RUN_ID" --json jobs \
+            --jq '.jobs[] | select(.conclusion=="failure") | "- " + .name' > failed_jobs.txt || true
+          gh run view "$RUN_ID" --log-failed 2>/dev/null | tail -n 120 | cut -c1-300 > failed_log.txt || true
+          echo "Failed jobs:"; cat failed_jobs.txt
+
+      - name: Open or update Sweep issue
+        run: |
+          gh label create sweep --color 5319e7 --description "Handled by Sweep AI" --force >/dev/null
+          TITLE="Sweep: Fix failing CI on main"
+          {
+            echo "CI failed on \`main\` at ${SHA:0:10} — [workflow run]($RUN_URL)."
+            echo
+            echo "**Failing jobs**"
+            cat failed_jobs.txt
+            echo
+            echo "**Log tail**"
+            echo '```'
+            cat failed_log.txt
+            echo '```'
+            echo
+            echo "Fix the root cause (not the test). Done when \`cd backend && LLM_PROVIDER=mock EMBED_MODEL=hash pytest -q\` and \`cd frontend && npm run build\` both pass."
+          } > body.md
+          EXISTING=$(gh issue list --state open --label sweep --search "in:title \"$TITLE\"" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body-file body.md
+            echo "Updated issue #$EXISTING" >> "$GITHUB_STEP_SUMMARY"
+          else
+            gh issue create --title "$TITLE" --label sweep --body-file body.md
+            echo "Opened Sweep issue" >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -1,0 +1,9 @@
+# AI test generation targets for Qodo Cover (CodiumAI cover-agent).
+# <source file>                      <test file it extends>                  <desired coverage %>
+# All targets must be testable with requirements-ci.txt (no chromadb / torch / API keys).
+rag/guardrails.py                    tests/test_guardrails.py                90
+rag/citations.py                     tests/test_citations.py                 95
+rag/text_utils.py                    tests/test_metrics.py                   95
+ingestion/link_graph.py              tests/test_linking.py                   85
+api/sourcegraph_client.py            tests/test_sourcegraph_client.py        80
+devops/ai_pr_review.py               tests/test_ai_pr_review.py              70

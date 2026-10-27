@@ -1,0 +1,29 @@
+name: Sweep task (AI-generated PR)
+description: Describe a small change and Sweep (sweep.dev) will open a pull request for it.
+title: "Sweep: "
+labels: ["sweep"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Sweep reads `sweep.yaml` for project context and rules. Keep the request small and concrete
+        (one bug, one test file, one endpoint). CI and the ReadMind AI review run on the PR it opens.
+  - type: textarea
+    id: request
+    attributes:
+      label: What should Sweep do?
+      placeholder: |
+        e.g. Add unit tests for backend/rag/guardrails.py covering prompt-injection, PII and the
+        llm_only / code_only / full_history hallucination levels.
+    validations:
+      required: true
+  - type: input
+    id: files
+    attributes:
+      label: Files to look at (optional)
+      placeholder: backend/rag/guardrails.py, backend/tests/
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      placeholder: "`cd backend && LLM_PROVIDER=mock EMBED_MODEL=hash pytest -q` passes"

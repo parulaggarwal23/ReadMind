@@ -1,0 +1,42 @@
+# Sweep (sweep.dev) — AI assistant that turns GitHub issues into pull requests for ReadMind.
+# How to use: install the Sweep GitHub App on this repo, then open an issue whose title starts with
+# "Sweep:" (or use the "Sweep task" issue template, which adds the `sweep` label).
+# CI failures on main also open a Sweep issue automatically (.github/workflows/sweep-ci-autofix.yml).
+# Docs: https://docs.sweep.dev/usage/config
+
+# Branch Sweep works from and opens PRs against
+branch: main
+
+# Let Sweep read GitHub Actions results/logs (CI, AI PR review) and fix its own failing PRs
+gha_enabled: True
+
+# Open real (non-draft) PRs so CI + the AI PR review run on them
+draft: False
+
+# Sweep must not touch generated data, secrets, the cluster manifests or the CI pipelines themselves
+blocked_dirs:
+  - backend/data/
+  - k8s/
+  - .github/workflows/
+  - frontend/node_modules/
+  - frontend/dist/
+
+description: >-
+  ReadMind is a research system that answers developer questions with RAG over repository history
+  (commits, issues, PRs, code reviews) and compares it against LLM-only and code-only baselines.
+  Backend: Python 3.11 + FastAPI in backend/ (api/main.py routes; rag/ = retrieval, LLM providers,
+  citations, guardrails, LangChain/LlamaIndex engines in rag/frameworks/; ingestion/ = git + GitHub
+  extraction and the history graph; evaluation/ = benchmark runner, metrics, Wilcoxon stats).
+  Frontend: React 18 + Vite in frontend/src (components/*.jsx, api.js holds every backend call).
+  Tests: `cd backend && LLM_PROVIDER=mock EMBED_MODEL=hash pytest -q` — they must pass without API keys,
+  model downloads or ChromaDB, so use the mock LLM provider and stub indexes in tests.
+  Frontend check: `cd frontend && npm install && npm run build`.
+
+# Checked by Sweep on every PR it opens
+rules:
+  - "Every new or changed backend function needs a pytest test in backend/tests that runs with LLM_PROVIDER=mock and EMBED_MODEL=hash."
+  - "Never hard-code API keys or tokens; read settings through backend/config.py and document new ones in .env.example."
+  - "Do not change the experimental conditions (llm_only, code_only, full_history) or their prompts in rag/pipeline.py without updating evaluation/ and the README."
+  - "LLM answers must keep [type:id] citations verifiable by rag/citations.py; never invent commit hashes, issue or PR numbers."
+  - "Frontend API calls go through frontend/src/api.js, not raw fetch calls inside components."
+  - "Keep heavy imports (chromadb, sentence_transformers, torch) lazy so CI can import modules with requirements-ci.txt only."

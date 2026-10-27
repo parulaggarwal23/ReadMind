@@ -4,11 +4,19 @@ import { api, TYPE_LABELS } from "../api";
 export default function EvidenceDrawer({ repo, docId, onNavigate, onClose }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [sgLinks, setSgLinks] = useState({});
 
   useEffect(() => {
     setData(null);
     setError("");
     api.evidence(repo, docId).then(setData).catch((e) => setError(e.message));
+    setSgLinks({});
+    // Sourcegraph deep links are optional: stay silent if Sourcegraph is not set up
+    api
+      .sourcegraphStatus()
+      .then((s) => (s.reachable ? api.sourcegraphLinks(repo, docId) : { links: {} }))
+      .then((r) => setSgLinks(r.links || {}))
+      .catch(() => setSgLinks({}));
   }, [repo, docId]);
 
   useEffect(() => {
@@ -37,6 +45,15 @@ export default function EvidenceDrawer({ repo, docId, onNavigate, onClose }) {
               <a className="gh-link" href={d.url} target="_blank" rel="noreferrer">
                 Open on GitHub ↗
               </a>
+            )}
+            {Object.keys(sgLinks).length > 0 && (
+              <div className="sg-links">
+                {sgLinks.blob && <a className="gh-link" href={sgLinks.blob} target="_blank" rel="noreferrer">Sourcegraph: view code ↗</a>}
+                {sgLinks.references && <a className="gh-link" href={sgLinks.references} target="_blank" rel="noreferrer">Find references ↗</a>}
+                {sgLinks.symbol_search && <a className="gh-link" href={sgLinks.symbol_search} target="_blank" rel="noreferrer">Symbol search ↗</a>}
+                {sgLinks.commit && <a className="gh-link" href={sgLinks.commit} target="_blank" rel="noreferrer">Sourcegraph: commit ↗</a>}
+                {sgLinks.history && <a className="gh-link" href={sgLinks.history} target="_blank" rel="noreferrer">File history ↗</a>}
+              </div>
             )}
             <pre className="evidence-full">{d.text}</pre>
             {data.linked.length > 0 && (

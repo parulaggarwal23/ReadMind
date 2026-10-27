@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { api, CONDITIONS } from "../api";
+import { useEffect, useState } from "react";
+import { api, CONDITIONS, ENGINES } from "../api";
 import AnswerCard from "./AnswerCard";
 
 const EXAMPLES = [
@@ -9,9 +9,23 @@ const EXAMPLES = [
   "What should I watch out for if I refactor the config loader?",
 ];
 
-export default function AskPanel({ repo, onCite }) {
+export default function AskPanel({ repo, onCite, prefill }) {
   const [question, setQuestion] = useState("");
   const [condition, setCondition] = useState("full_history");
+  const [engine, setEngine] = useState("native");
+  const [available, setAvailable] = useState({ native: true });
+
+  // "Ask why" from the Code Navigation tab pre-fills the question
+  useEffect(() => {
+    if (prefill?.question) setQuestion(prefill.question);
+  }, [prefill]);
+
+  useEffect(() => {
+    api
+      .engines()
+      .then((list) => setAvailable(Object.fromEntries(list.map((e) => [e.id, e.available]))))
+      .catch(() => setAvailable({ native: true }));
+  }, []);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -22,7 +36,7 @@ export default function AskPanel({ repo, onCite }) {
     setLoading(true);
     setError("");
     try {
-      setResult(await api.ask({ repo, question, condition }));
+      setResult(await api.ask({ repo, question, condition, engine }));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -56,6 +70,17 @@ export default function AskPanel({ repo, onCite }) {
               </button>
             ))}
           </div>
+          <label className="engine-select">
+            <span className="muted">RAG engine</span>
+            <select value={engine} onChange={(e) => setEngine(e.target.value)} aria-label="RAG engine">
+              {ENGINES.map((en) => (
+                <option key={en.id} value={en.id} disabled={available[en.id] === false}>
+                  {en.label}
+                  {available[en.id] === false ? " (not installed)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
           <button className="primary" disabled={loading || question.trim().length < 3}>
             {loading ? "Retrieving & answering…" : "Ask"}
           </button>

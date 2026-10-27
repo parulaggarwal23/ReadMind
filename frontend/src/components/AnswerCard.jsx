@@ -94,6 +94,11 @@ export default function AnswerCard({ result, onCite, compact = false }) {
     <div className="card answer-card">
       <div className="answer-head">
         <span className="cond-tag" style={{ "--c": cond?.color }}>{result.condition_label}</span>
+        {result.engine && result.engine !== "native" && (
+          <span className="engine-tag" title="Same ReadMind retrieval, answered through this framework">
+            {result.engine === "langchain" ? "🦜 LangChain" : "🦙 LlamaIndex"}
+          </span>
+        )}
         <span className="muted mono">{(result.latency_ms.total / 1000).toFixed(1)} s</span>
       </div>
 

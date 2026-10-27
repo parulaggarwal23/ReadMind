@@ -8,6 +8,7 @@ import EvidenceDrawer from "./components/EvidenceDrawer";
 import HeroExplanation from "./components/HeroExplanation";
 import KnowledgeBaseView from "./components/KnowledgeBaseView";
 import KubernetesDashboard from "./components/KubernetesDashboard";
+import SourcegraphView from "./components/SourcegraphView";
 
 const TABS = [
   { id: "knowledge", label: "Knowledge Base" },
@@ -15,6 +16,7 @@ const TABS = [
   { id: "compare", label: "Compare conditions" },
   { id: "eval", label: "Evaluation" },
   { id: "k8s", label: "☸️ Kubernetes & HPA" },
+  { id: "sourcegraph", label: "🔎 Code Navigation" },
 ];
 
 export default function App() {
@@ -25,6 +27,7 @@ export default function App() {
   const [activeModel, setActiveModel] = useState("gemini-3.5-flash");
   const [error, setError] = useState("");
   const [evidenceId, setEvidenceId] = useState(null);
+  const [askPrefill, setAskPrefill] = useState(null);
 
   // Live GitHub Sync & Push Notification State
   const [pendingUpdate, setPendingUpdate] = useState(null);
@@ -212,7 +215,7 @@ export default function App() {
 
       <main>
         {error && <div className="alert error">{error}</div>}
-        {!error && repos.length === 0 && tab !== "eval" && tab !== "k8s" && (
+        {!error && repos.length === 0 && tab !== "eval" && tab !== "k8s" && tab !== "sourcegraph" && (
           <div className="alert">
             No indexed repositories yet. Add your repos to <code>backend/repos.yaml</code> and run{" "}
             <code>python -m ingestion.run_ingestion --repo all</code>.
@@ -224,7 +227,7 @@ export default function App() {
               <KnowledgeBaseView currentRepo={current} repos={repos} onSelectRepo={setRepo} />
             </div>
             <div hidden={tab !== "ask"}>
-              <AskPanel repo={repo} onCite={setEvidenceId} />
+              <AskPanel repo={repo} onCite={setEvidenceId} prefill={askPrefill} />
             </div>
             <div hidden={tab !== "compare"}>
               <CompareView repo={repo} onCite={setEvidenceId} />
@@ -233,6 +236,15 @@ export default function App() {
         )}
         {tab === "eval" && <EvalDashboard />}
         {tab === "k8s" && <KubernetesDashboard />}
+        <div hidden={tab !== "sourcegraph"}>
+          <SourcegraphView
+            repo={repo}
+            onAskWhy={(q) => {
+              setAskPrefill({ question: q, at: Date.now() });
+              setTab("ask");
+            }}
+          />
+        </div>
       </main>
 
       {evidenceId && (

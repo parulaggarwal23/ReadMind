@@ -3,6 +3,8 @@
     python -m evaluation.run_eval                          # all conditions, verified questions
     python -m evaluation.run_eval --conditions full_history code_only --limit 20
     python -m evaluation.run_eval --no-judge               # retrieval + latency only (no judge cost)
+    python -m evaluation.run_eval --engine langchain       # same benchmark through the LangChain chain
+    python -m evaluation.run_eval --engine llamaindex      # ... or the LlamaIndex query engine
 
 Results are appended to data/eval/results.jsonl and the run resumes where it stopped."""
 import argparse
@@ -13,7 +15,7 @@ from tqdm import tqdm
 from config import EVAL_DIR
 from evaluation.metrics import judge_answer, retrieval_metrics
 from evaluation.stats import summarize
-from rag.pipeline import ALL_CONDITIONS, CONDITIONS, answer_question
+from rag.pipeline import ALL_CONDITIONS, CONDITIONS, ENGINES, answer_question
 from rag.retriever import get_index
 
 
@@ -25,13 +27,19 @@ def load_benchmark(path, include_unverified=False):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--benchmark", default=str(EVAL_DIR / "benchmark.jsonl"))
-    ap.add_argument("--out", default=str(EVAL_DIR / "results.jsonl"))
+    ap.add_argument("--out", default=None,
+                    help="default: results.jsonl (native) or results_<engine>.jsonl for langchain/llamaindex")
+    ap.add_argument("--engine", default="native", choices=list(ENGINES),
+                    help="native pipeline, or the same retrieval through LangChain / LlamaIndex")
     ap.add_argument("--conditions", nargs="+", default=list(CONDITIONS), choices=list(ALL_CONDITIONS))
     ap.add_argument("--k", type=int, default=8)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--include-unverified", action="store_true")
     ap.add_argument("--no-judge", action="store_true")
     args = ap.parse_args()
+    if args.out is None:
+        name = "results.jsonl" if args.engine == "native" else f"results_{args.engine}.jsonl"
+        args.out = str(EVAL_DIR / name)
 
     items = load_benchmark(args.benchmark, args.include_unverified)
     if args.limit:
@@ -56,7 +64,7 @@ def main():
                 if (item["id"], cond) in done:
                     continue
                 try:
-                    res = answer_question(item["repo"], item["question"], cond, args.k)
+                    res = answer_question(item["repo"], item["question"], cond, args.k, engine=args.engine)
                 except Exception as e:
                     print(f"\n{item['id']} [{cond}] failed: {e}")
                     continue
@@ -64,7 +72,7 @@ def main():
                 v = res["verification"]
                 row = {
                     "qid": item["id"], "repo": item["repo"], "category": item.get("category"),
-                    "condition": cond, "question": item["question"], "answer": res["answer"],
+                    "condition": cond, "engine": args.engine, "question": item["question"], "answer": res["answer"],
                     "retrieved": retrieved, "gold_evidence": gold,
                     "latency_total_ms": res["latency_ms"]["total"],
                     "latency_retrieval_ms": res["latency_ms"]["retrieval"],

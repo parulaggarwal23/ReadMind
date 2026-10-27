@@ -163,6 +163,17 @@ python -m evaluation.stats                          # merges human results into 
 - **Fairness:** all conditions use the same LLM, temperature 0 and the same `k`.
 - **Known limitation:** code chunks are linked to history at file level. Line-level linking via `git blame` is a good extension.
 
+## AI DevOps integrations
+
+Full guide: **[DEVOPS_AI.md](DEVOPS_AI.md)**.
+
+| Integration | Entry point |
+|---|---|
+| LangChain + LlamaIndex RAG engines over ReadMind's retriever | `backend/rag/frameworks/` · Ask tab → *RAG engine* · `run_eval --engine langchain` |
+| Sweep.dev + AI GitHub Actions (history-aware PR review, CI-failure → Sweep) | `sweep.yaml` · `.github/workflows/ai-pr-review.yml`, `sweep-ci-autofix.yml` |
+| AI test generation with Qodo Cover (CodiumAI) | `backend/scripts/generate_tests.sh` · `.github/workflows/ai-test-generation.yml` |
+| Sourcegraph code search + SCIP code navigation | `sourcegraph/README.md` · 🔎 Code Navigation tab · `.github/workflows/sourcegraph-scip.yml` |
+
 ## Tests
 
 ```bash

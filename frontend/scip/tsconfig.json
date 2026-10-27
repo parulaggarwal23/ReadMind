@@ -1,0 +1,14 @@
+{
+  "//": "Used only by scip-typescript (Sourcegraph code navigation). Vite does not read this file.",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "target": "ES2022",
+    "skipLibCheck": true
+  },
+  "include": ["../src/**/*.js", "../src/**/*.jsx", "../vite.config.js"]
+}

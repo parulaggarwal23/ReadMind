@@ -1,0 +1,15 @@
+// Sourcegraph → Site admin → Code host connections → Add → GitHub. Paste this, replace the token.
+// Keep "repos" in sync with backend/repos.yaml:  python sourcegraph/sync_code_host.py
+{
+  "url": "https://github.com",
+  "token": "<YOUR_GITHUB_TOKEN>",
+  "repos": [
+    "parulaggarwal23/ReadMind",
+    "seL4/seL4",
+    "actualbudget/actual",
+    "KDE/kio",
+    "CHERIoT-Platform/cheriot-rtos",
+    "infiniflow/ragflow",
+    "parulaggarwal23/PolicyPal-AI"
+  ]
+}

@@ -1,0 +1,100 @@
+name: AI test generation (Qodo Cover / CodiumAI)
+
+# Runs Qodo Cover (CodiumAI's open-source cover-agent) over the targets in
+# backend/scripts/ai_test_targets.txt. The agent proposes tests with an LLM, runs them, and keeps only
+# the ones that pass AND raise coverage. The result is opened as a pull request, so every AI-generated
+# test is reviewed by a person, by CI and by the ReadMind AI review before it is merged.
+#
+# Secrets: GEMINI_API_KEY (default model gemini/gemini-2.5-flash) or OPENAI_API_KEY with model gpt-4o-mini.
+# Repo setting needed: Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests".
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Only this source file (e.g. rag/guardrails.py); empty = all targets"
+        required: false
+        default: ""
+      model:
+        description: "LiteLLM model id"
+        required: false
+        default: "gemini/gemini-2.5-flash"
+      max_iterations:
+        description: "LLM iterations per file"
+        required: false
+        default: "3"
+  schedule:
+    - cron: "30 3 * * 1"   # Mondays 09:00 IST
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"      # cover-agent needs Python 3.10-3.12
+          cache: pip
+
+      - name: Install ReadMind test deps + Qodo Cover
+        run: |
+          pip install -r requirements-ci.txt
+          pip install "git+https://github.com/qodo-ai/qodo-cover.git@0.3.9"
+
+      - name: Generate tests
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          COVER_MODEL: ${{ inputs.model || 'gemini/gemini-2.5-flash' }}
+          COVER_MAX_ITERATIONS: ${{ inputs.max_iterations || '3' }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ] && [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error::Add a GEMINI_API_KEY (or OPENAI_API_KEY) repository secret"; exit 1
+          fi
+          bash scripts/generate_tests.sh "${{ inputs.target }}"
+
+      - name: Report
+        if: always()
+        run: cat data/ai-tests/report.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Keep cover-agent reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qodo-cover-reports
+          path: |
+            backend/data/ai-tests/
+            backend/coverage.xml
+          if-no-files-found: ignore
+
+      - name: Prepare PR body
+        id: body
+        run: |
+          {
+            echo "AI-generated unit tests from **Qodo Cover** (CodiumAI cover-agent)."
+            echo "Every test below passed and increased coverage when it was generated."
+            echo
+            cat data/ai-tests/report.md
+            echo
+            echo "**Reviewer checklist:** assertions check real behaviour (not just 'no exception'), no network/API keys, names describe the case."
+          } > "$RUNNER_TEMP/pr_body.md"
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: ai/qodo-generated-tests
+          commit-message: "test: AI-generated tests (Qodo Cover)"
+          title: "test: AI-generated tests from Qodo Cover"
+          body-path: ${{ runner.temp }}/pr_body.md
+          labels: ai-generated, tests
+          add-paths: backend/tests/*.py
+          delete-branch: true

@@ -37,7 +37,19 @@ export const api = {
   k8sSimulateLoad: () => request("/k8s/simulate-load", { method: "POST" }),
   k8sResetLoad: () => request("/k8s/reset-load", { method: "POST" }),
   k8sManifests: () => request("/k8s/manifests"),
+  engines: () => request("/engines"),
+  sourcegraphStatus: () => request("/sourcegraph/status"),
+  sourcegraphSearch: (body) => request("/sourcegraph/search", { method: "POST", body: JSON.stringify(body) }),
+  sourcegraphLinks: (repo, id) =>
+    request(`/sourcegraph/links?repo=${encodeURIComponent(repo)}&id=${encodeURIComponent(id)}`),
 };
+
+// RAG engine: ReadMind's own pipeline, or the same retrieval run through LangChain / LlamaIndex
+export const ENGINES = [
+  { id: "native", label: "ReadMind" },
+  { id: "langchain", label: "LangChain" },
+  { id: "llamaindex", label: "LlamaIndex" },
+];
 
 // Fixed order + fixed colour per condition (colour follows the condition, never its rank)
 export const CONDITIONS = [

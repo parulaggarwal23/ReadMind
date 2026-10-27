@@ -41,6 +41,10 @@ HISTORY_QUOTA = float(os.getenv("HISTORY_QUOTA", "0.5"))
 
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
 
+# ---------- Sourcegraph (semantic code search + code navigation) ----------
+SOURCEGRAPH_URL = os.getenv("SOURCEGRAPH_URL", "http://localhost:7080")
+SOURCEGRAPH_TOKEN = os.getenv("SOURCEGRAPH_TOKEN", "")
+
 REPOS_FILE = Path(os.getenv("REPOS_FILE", BASE_DIR / "repos.yaml"))
 
 

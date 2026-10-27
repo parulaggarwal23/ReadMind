@@ -22,15 +22,18 @@ from config import (
     RAW_DIR,
     REPOS_FILE,
 )
-from rag.pipeline import CONDITIONS, answer_question
+from rag.pipeline import CONDITIONS, ENGINES, answer_question
 from rag.retriever import get_index, list_indexed
 from api.sync_manager import check_repo_updates, dismiss_repo_update, simulate_github_push, sync_repo_updates
 from api.k8s_manager import get_cluster_status, simulate_traffic_spike, reset_traffic, get_k8s_manifests
+from api.sourcegraph_client import router as sourcegraph_router
 
 app = FastAPI(title="ReadMind", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
+app.include_router(sourcegraph_router)
 
 Condition = Literal["llm_only", "code_only", "full_history"]
+Engine = Literal["native", "langchain", "llamaindex"]
 
 
 class AskRequest(BaseModel):
@@ -38,12 +41,14 @@ class AskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=2000)
     condition: Condition = "full_history"
     top_k: int = Field(8, ge=1, le=20)
+    engine: Engine = "native"  # native | langchain | llamaindex (same retrieval, prompts and LLM)
 
 
 class CompareRequest(BaseModel):
     repo: str
     question: str = Field(min_length=3, max_length=2000)
     top_k: int = Field(8, ge=1, le=20)
+    engine: Engine = "native"
 
 
 def _index(slug):
@@ -68,11 +73,33 @@ def conditions():
     return [{"id": k, "label": v["label"]} for k, v in CONDITIONS.items()]
 
 
+@app.get("/api/engines")
+def engines():
+    """RAG engines: ReadMind's native pipeline, or the same retrieval run through LangChain / LlamaIndex."""
+    out = []
+    for k, label in ENGINES.items():
+        available = True
+        if k == "langchain":
+            available = _importable("langchain_core")
+        elif k == "llamaindex":
+            available = _importable("llama_index.core")
+        out.append({"id": k, "label": label, "available": available})
+    return out
+
+
+def _importable(module):
+    import importlib.util
+    try:
+        return importlib.util.find_spec(module) is not None
+    except ModuleNotFoundError:
+        return False
+
+
 @app.post("/api/ask")
 def ask(req: AskRequest):
     _index(req.repo)
     try:
-        return answer_question(req.repo, req.question, req.condition, req.top_k)
+        return answer_question(req.repo, req.question, req.condition, req.top_k, engine=req.engine)
     except Exception as e:  # surface LLM/provider errors to the UI
         raise HTTPException(502, f"{type(e).__name__}: {e}")
 
@@ -280,7 +307,7 @@ def compare(req: CompareRequest):
     results = []
     for cond in CONDITIONS:  # sequential so latency numbers aren't distorted
         try:
-            results.append(answer_question(req.repo, req.question, cond, req.top_k))
+            results.append(answer_question(req.repo, req.question, cond, req.top_k, engine=req.engine))
         except Exception as e:
             results.append({"condition": cond, "condition_label": CONDITIONS[cond]["label"],
                             "error": f"{type(e).__name__}: {e}"})

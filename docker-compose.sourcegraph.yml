@@ -1,0 +1,33 @@
+# Sourcegraph overlay for ReadMind — semantic code search + code navigation.
+#
+#   Whole stack:       docker compose -f docker-compose.yml -f docker-compose.sourcegraph.yml up -d --build
+#   Sourcegraph only:  docker compose -f docker-compose.yml -f docker-compose.sourcegraph.yml up -d sourcegraph
+#                      (then run the backend with uvicorn; it uses http://localhost:7080 by default)
+#
+# Then open http://localhost:7080, create the admin account, and follow sourcegraph/README.md
+# (add the GitHub code host from sourcegraph/code-host-github.json, create an access token,
+# put it in .env as SOURCEGRAPH_TOKEN).
+#
+# The single-container image was removed in Sourcegraph 7.0, so it is pinned to the last 6.x release here.
+# Override with SOURCEGRAPH_VERSION=<6.x tag> if this tag is not on Docker Hub.
+
+services:
+  sourcegraph:
+    image: sourcegraph/server:${SOURCEGRAPH_VERSION:-6.12.5040}
+    restart: unless-stopped
+    ports:
+      - "7080:7080"              # web UI + GraphQL API
+      - "127.0.0.1:3370:3370"    # built-in Grafana (localhost only)
+    volumes:
+      - sourcegraph-config:/etc/sourcegraph
+      - sourcegraph-data:/var/opt/sourcegraph
+
+  # Merged into the backend service from docker-compose.yml: inside the compose network the
+  # backend reaches Sourcegraph by service name.
+  backend:
+    environment:
+      SOURCEGRAPH_URL: http://sourcegraph:7080
+
+volumes:
+  sourcegraph-config:
+  sourcegraph-data:
