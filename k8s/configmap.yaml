@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: readmind-config
+  namespace: readmind-prod
+  labels:
+    app: readmind
+data:
+  DATA_DIR: "/app/data"
+  LLM_PROVIDER: "gemini"
+  LLM_MODEL: "gemini-3.5-flash"
+  EMBED_MODEL: "BAAI/bge-small-en-v1.5"
+  USE_RERANKER: "true"
+  TOP_K_FINAL: "8"
+  HISTORY_QUOTA: "0.5"
+  CORS_ORIGINS: "*"

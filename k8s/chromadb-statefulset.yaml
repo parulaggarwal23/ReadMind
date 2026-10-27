@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: chromadb-vector-store
+  namespace: readmind-prod
+  labels:
+    app: chromadb
+    tier: data
+spec:
+  serviceName: "chromadb-svc"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chromadb
+  template:
+    metadata:
+      labels:
+        app: chromadb
+        tier: data
+    spec:
+      containers:
+        - name: chroma
+          image: chromadb/chroma:0.5.5
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: chroma-port
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              cpu: 1000m
+              memory: 4Gi
+          volumeMounts:
+            - name: chroma-data
+              mountPath: /chroma/chroma
+  volumeClaimTemplates:
+    - metadata:
+        name: chroma-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chromadb-svc
+  namespace: readmind-prod
+  labels:
+    app: chromadb
+spec:
+  ports:
+    - port: 8000
+      name: chroma-port
+  clusterIP: None
+  selector:
+    app: chromadb

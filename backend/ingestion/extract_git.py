@@ -1,4 +1,5 @@
 """Clone a repository and extract commit history with PyDriller."""
+from __future__ import annotations
 import subprocess
 from pathlib import Path
 

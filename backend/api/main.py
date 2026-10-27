@@ -1,15 +1,31 @@
-"""FastAPI backend.   Run from backend/:   uvicorn api.main:app --reload --port 8000"""
 import json
+import shutil
+import subprocess
+import sys
 from typing import Literal
 from pathlib import Path
 
+import requests
+import yaml
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from config import CORS_ORIGINS, EVAL_DIR, LLM_MODEL, LLM_PROVIDER
+from config import (
+    BASE_DIR,
+    CORS_ORIGINS,
+    EVAL_DIR,
+    GITHUB_TOKEN,
+    INDEX_DIR,
+    LLM_MODEL,
+    LLM_PROVIDER,
+    RAW_DIR,
+    REPOS_FILE,
+)
 from rag.pipeline import CONDITIONS, answer_question
 from rag.retriever import get_index, list_indexed
+from api.sync_manager import check_repo_updates, dismiss_repo_update, simulate_github_push, sync_repo_updates
+from api.k8s_manager import get_cluster_status, simulate_traffic_spike, reset_traffic, get_k8s_manifests
 
 app = FastAPI(title="ReadMind", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
@@ -60,7 +76,49 @@ def ask(req: AskRequest):
     except Exception as e:  # surface LLM/provider errors to the UI
         raise HTTPException(502, f"{type(e).__name__}: {e}")
 
-import subprocess
+@app.get("/api/repos/verify-github")
+def verify_github_repo(repo: str = Query(...)):
+    """Check if GitHub repository exists and is accessible using backend GITHUB_TOKEN."""
+    owner_name = repo.strip().strip("/")
+    if "github.com/" in owner_name:
+        owner_name = owner_name.split("github.com/")[-1].strip("/")
+    if owner_name.endswith(".git"):
+        owner_name = owner_name[:-4]
+    
+    parts = [p for p in owner_name.split("/") if p]
+    if len(parts) < 2:
+        return {"valid": False, "error": "Invalid format. Expected owner/repo (e.g. facebook/react)"}
+    
+    target = f"{parts[0]}/{parts[1]}"
+    headers = {"Accept": "application/vnd.github+json"}
+    if GITHUB_TOKEN:
+        headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
+        
+    try:
+        r = requests.get(f"https://api.github.com/repos/{target}", headers=headers, timeout=10)
+        if r.status_code == 404:
+            return {"valid": False, "error": f"Repository '{target}' was not found on GitHub."}
+        if r.status_code == 200:
+            data = r.json()
+            return {
+                "valid": True,
+                "repo": target,
+                "slug": target.replace("/", "__"),
+                "description": data.get("description", ""),
+                "stars": data.get("stargazers_count", 0),
+                "is_private": data.get("private", False)
+            }
+        return {"valid": True, "repo": target, "slug": target.replace("/", "__")}
+    except Exception as e:
+        # Fallback: git ls-remote
+        try:
+            res = subprocess.run(["git", "ls-remote", f"https://github.com/{target}.git"], capture_output=True, timeout=8)
+            if res.returncode == 0:
+                return {"valid": True, "repo": target, "slug": target.replace("/", "__")}
+        except Exception:
+            pass
+        return {"valid": False, "error": str(e)}
+
 
 @app.post("/api/ingest")
 def run_ingest(req: dict):
@@ -70,51 +128,132 @@ def run_ingest(req: dict):
         
     slug = repo.replace("/", "__")
     
-    # 1. Append to repos.yaml if not already there
-    repos_file = Path("repos.yaml")
-    content = repos_file.read_text()
-    if repo not in content:
-        with open("repos.yaml", "a") as f:
-            f.write(f"\n  - github: {repo}\n")
+    # 1. Update repos.yaml cleanly
+    if REPOS_FILE.exists():
+        cfg = yaml.safe_load(REPOS_FILE.read_text(encoding="utf-8")) or {}
+        repo_entries = cfg.get("repos", [])
+        if not any(r.get("github") == repo for r in repo_entries if isinstance(r, dict)):
+            repo_entries.append({"github": repo})
+            cfg["repos"] = repo_entries
+            REPOS_FILE.write_text(yaml.dump(cfg, sort_keys=False), encoding="utf-8")
             
-    # 2. Run ingestion synchronously so the frontend can wait for it
+    # 2. Run ingestion synchronously with sys.executable and BASE_DIR cwd
     try:
-        subprocess.run(["python", "-m", "ingestion.run_ingestion", "--repo", slug], check=True)
+        subprocess.run(
+            [sys.executable, "-m", "ingestion.run_ingestion", "--repo", slug],
+            cwd=str(BASE_DIR),
+            check=True
+        )
+        get_index.cache_clear()
     except subprocess.CalledProcessError as e:
         raise HTTPException(500, f"Ingestion failed: {e}")
         
     return {"status": "success", "slug": slug}
 
-import shutil
-from config import INDEX_DIR, RAW_DIR
 
 @app.delete("/api/repos/{slug}")
 def delete_repo(slug: str):
     repo = slug.replace("__", "/")
     
     # 1. Remove from repos.yaml
-    repos_file = Path("repos.yaml")
-    if repos_file.exists():
-        content = repos_file.read_text().splitlines()
-        new_content = [line for line in content if repo not in line]
-        repos_file.write_text("\n".join(new_content) + "\n")
+    if REPOS_FILE.exists():
+        cfg = yaml.safe_load(REPOS_FILE.read_text(encoding="utf-8")) or {}
+        repo_entries = cfg.get("repos", [])
+        cfg["repos"] = [r for r in repo_entries if (r.get("github") if isinstance(r, dict) else r) != repo]
+        REPOS_FILE.write_text(yaml.dump(cfg, sort_keys=False), encoding="utf-8")
         
     # 2. Delete index and raw data folders
     shutil.rmtree(INDEX_DIR / slug, ignore_errors=True)
     shutil.rmtree(RAW_DIR / slug, ignore_errors=True)
+    get_index.cache_clear()
     
     return {"status": "deleted"}
 
 
+@app.get("/api/repos/{slug}/check-updates")
+def check_updates(slug: str):
+    """Poll or check if repository has new commits / PRs on GitHub."""
+    return check_repo_updates(slug)
+
+
+@app.post("/api/repos/{slug}/dismiss-update")
+def dismiss_update(slug: str):
+    """Dismiss pending update notification for this repository."""
+    return dismiss_repo_update(slug)
+
+
+@app.post("/api/repos/{slug}/simulate-push")
+def simulate_push(slug: str, req: dict = None):
+    """Simulate a team member pushing new code to GitHub for live notification demonstration."""
+    message = req.get("message") if req else None
+    author = req.get("author", "Parul Aggarwal") if req else "Parul Aggarwal"
+    return simulate_github_push(slug, message=message, author=author)
+
+
+@app.post("/api/repos/{slug}/sync")
+def sync_repo(slug: str):
+    """Synchronize latest changes into the Knowledge Base, update stats, and re-index."""
+    return sync_repo_updates(slug)
+
+
+@app.post("/api/webhook/github")
+def github_webhook(payload: dict):
+    """GitHub Push / PR Webhook receiver for real-time continuous ingestion."""
+    repo_info = payload.get("repository", {})
+    repo_full = repo_info.get("full_name", "")
+    if repo_full:
+        slug = repo_full.replace("/", "__")
+        head_commit = payload.get("head_commit", {})
+        simulate_github_push(
+            slug=slug,
+            message=head_commit.get("message", "GitHub Push Event"),
+            author=head_commit.get("author", {}).get("name", "GitHub Webhook")
+        )
+    return {"status": "received"}
+
+
+@app.get("/api/k8s/status")
+def k8s_status():
+    """Return live Kubernetes cluster topology, microservices, and HPA auto-scaler state."""
+    return get_cluster_status()
+
+
+@app.post("/api/k8s/simulate-load")
+def k8s_simulate_load():
+    """Simulate high query traffic spike that triggers HPA auto-scaling."""
+    return simulate_traffic_spike()
+
+
+@app.post("/api/k8s/reset-load")
+def k8s_reset_load():
+    """Reset cluster traffic back to baseline."""
+    return reset_traffic()
+
+
+@app.get("/api/k8s/manifests")
+def k8s_manifests():
+    """Return raw Kubernetes declarative YAML manifests."""
+    return get_k8s_manifests()
+
+
 @app.get("/api/repos/{slug}/sample-chunks")
-def sample_chunks(slug: str, skip: int = 0, limit: int = 10):
+def sample_chunks(slug: str, skip: int = 0, limit: int = 10, type: str = None):
     idx = _index(slug)
-    return [idx.docs[i] for i in idx.ids[skip : skip + limit]]
+    matching_ids = idx.get_typed_ids(type)
+    total_matching = len(matching_ids)
+    items = [idx.docs[i] for i in matching_ids[skip : skip + limit]]
+    return {
+        "items": items,
+        "total": total_matching,
+        "skip": skip,
+        "limit": limit
+    }
 
 
 @app.get("/api/repos/{slug}/sample-embeddings")
 def sample_embeddings(slug: str, skip: int = 0, limit: int = 10):
     idx = _index(slug)
+    total_count = idx.collection.count()
     res = idx.collection.get(limit=limit, offset=skip, include=["embeddings", "metadatas"])
     samples = []
     if res and res.get("embeddings") is not None:
@@ -128,7 +267,12 @@ def sample_embeddings(slug: str, skip: int = 0, limit: int = 10):
                 "type": res["metadatas"][i]["type"] if res.get("metadatas") else "unknown",
                 "embedding": truncated_emb
             })
-    return samples
+    return {
+        "items": samples,
+        "total": total_count,
+        "skip": skip,
+        "limit": limit
+    }
 
 @app.post("/api/compare")
 def compare(req: CompareRequest):

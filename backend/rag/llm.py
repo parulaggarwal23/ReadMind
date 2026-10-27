@@ -1,5 +1,6 @@
 """One interface over several LLM providers: gemini | openai | ollama | mock.
 `mock` needs no API key and is used by tests/CI."""
+from __future__ import annotations
 import json
 import re
 import time
@@ -28,9 +29,31 @@ def _call(provider, model, system, prompt, temperature, json_mode):
         cfg = {"system_instruction": system, "temperature": temperature}
         if json_mode:
             cfg["response_mime_type"] = "application/json"
-        resp = _gemini().models.generate_content(model=model, contents=prompt,
-                                                 config=types.GenerateContentConfig(**cfg))
-        return resp.text or ""
+        
+        # Build candidate list with primary model first, followed by resilient fallbacks
+        candidates = [model]
+        for fb in ("gemini-3.5-flash-lite", "gemini-3-flash-preview", "gemini-3.5-flash"):
+            if fb not in candidates:
+                candidates.append(fb)
+                
+        last_err = None
+        for candidate_model in candidates:
+            for attempt in range(3):
+                try:
+                    resp = _gemini().models.generate_content(
+                        model=candidate_model, contents=prompt,
+                        config=types.GenerateContentConfig(**cfg)
+                    )
+                    return resp.text or ""
+                except Exception as e:
+                    last_err = e
+                    err_msg = str(e).lower()
+                    if "503" in err_msg or "unavailable" in err_msg:
+                        time.sleep(1.0 * (attempt + 1))
+                        continue
+                    # If 429 quota exhausted or 404, immediately switch to next fallback model
+                    break
+        raise last_err
     if provider == "openai":
         kwargs = {"response_format": {"type": "json_object"}} if json_mode else {}
         resp = _openai().chat.completions.create(

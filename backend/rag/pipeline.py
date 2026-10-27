@@ -3,6 +3,7 @@ import time
 
 from config import LLM_MODEL, LLM_PROVIDER, TOP_K_FINAL
 from rag.citations import verify_citations
+from rag.guardrails import run_guardrails
 from rag.llm import generate
 from rag.retriever import get_index
 
@@ -64,15 +65,26 @@ def answer_question(slug: str, question: str, condition: str = "full_history", k
     answer = generate(system, prompt)
     t2 = time.perf_counter()
 
+    evidence_cleaned = [{**{k2: v for k2, v in e.items() if k2 != "text"}, "snippet": e["text"][:500]}
+                        for e in evidence]
+    verification = verify_citations(answer, [e["id"] for e in evidence])
+    guardrails = run_guardrails(
+        question=question,
+        answer=answer,
+        evidence=evidence,
+        verification=verification,
+        condition=condition
+    )
+
     return {
         "repo": slug,
         "condition": condition,
         "condition_label": spec["label"],
         "question": question,
         "answer": answer,
-        "evidence": [{**{k2: v for k2, v in e.items() if k2 != "text"}, "snippet": e["text"][:500]}
-                     for e in evidence],
-        "verification": verify_citations(answer, [e["id"] for e in evidence]),
+        "evidence": evidence_cleaned,
+        "verification": verification,
+        "guardrails": guardrails,
         "latency_ms": {"retrieval": round((t1 - t0) * 1000, 1), "generation": round((t2 - t1) * 1000, 1),
                        "total": round((t2 - t0) * 1000, 1), **{k2: round(v, 1) for k2, v in timings.items()}},
         "model": f"{LLM_PROVIDER}:{LLM_MODEL}",

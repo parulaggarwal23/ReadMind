@@ -42,6 +42,17 @@ class RepoIndex:
         self.collection = chromadb.PersistentClient(path=str(d / "chroma")).get_collection("docs")
         self.graph = load_graph(d / "graph.json")
 
+    def get_typed_ids(self, types=None):
+        """Return list of document IDs filtered by type(s). Supports comma-separated string or iterable."""
+        if not types or types == "all":
+            return self.ids
+        if isinstance(types, str):
+            types_set = set(t.strip() for t in types.split(",") if t.strip())
+        else:
+            types_set = set(types)
+        mask = np.isin(self.types, list(types_set))
+        return [self.ids[i] for i in np.where(mask)[0]]
+
     # ---------- individual retrievers ----------
     def bm25_search(self, query, types, k):
         scores = self.bm25.get_scores(tokenize(query))

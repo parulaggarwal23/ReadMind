@@ -7,12 +7,14 @@ import EvalDashboard from "./components/EvalDashboard";
 import EvidenceDrawer from "./components/EvidenceDrawer";
 import HeroExplanation from "./components/HeroExplanation";
 import KnowledgeBaseView from "./components/KnowledgeBaseView";
+import KubernetesDashboard from "./components/KubernetesDashboard";
 
 const TABS = [
   { id: "knowledge", label: "Knowledge Base" },
   { id: "ask", label: "Ask" },
   { id: "compare", label: "Compare conditions" },
   { id: "eval", label: "Evaluation" },
+  { id: "k8s", label: "☸️ Kubernetes & HPA" },
 ];
 
 export default function App() {
@@ -20,9 +22,15 @@ export default function App() {
   const [repo, setRepo] = useState("");
   const [tab, setTab] = useState("knowledge");
   const [health, setHealth] = useState(null);
-  const [activeModel, setActiveModel] = useState("gemini-2.5-flash");
+  const [activeModel, setActiveModel] = useState("gemini-3.5-flash");
   const [error, setError] = useState("");
   const [evidenceId, setEvidenceId] = useState(null);
+
+  // Live GitHub Sync & Push Notification State
+  const [pendingUpdate, setPendingUpdate] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncToast, setSyncToast] = useState("");
+  const [isSimulating, setIsSimulating] = useState(false);
 
   useEffect(() => {
     api.health().then(setHealth).catch(() => setHealth(null));
@@ -34,6 +42,68 @@ export default function App() {
       })
       .catch((e) => setError(`Cannot reach the backend: ${e.message}`));
   }, []);
+
+  // Poll for GitHub updates periodically for the selected repository
+  useEffect(() => {
+    if (!repo) return;
+    const check = () => {
+      api.checkUpdates(repo)
+        .then((data) => {
+          if (data && data.has_updates) {
+            setPendingUpdate(data);
+          } else {
+            setPendingUpdate(null);
+          }
+        })
+        .catch(() => {});
+    };
+
+    check();
+    const interval = setInterval(check, 12000);
+    return () => clearInterval(interval);
+  }, [repo]);
+
+  const handleSync = async () => {
+    if (!repo || isSyncing) return;
+    setIsSyncing(true);
+    try {
+      const res = await api.syncRepo(repo);
+      setPendingUpdate(null);
+      setSyncToast(res.message || "Knowledge Base successfully synchronized with latest changes!");
+      setTimeout(() => setSyncToast(""), 6000);
+
+      // Reload repos to refresh updated counts in UI
+      const updatedList = await api.repos();
+      setRepos(updatedList);
+    } catch (err) {
+      alert("Error syncing repository: " + err.message);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSimulatePush = async () => {
+    if (!repo || isSimulating) return;
+    setIsSimulating(true);
+    try {
+      const res = await api.simulatePush(repo);
+      setPendingUpdate(res);
+    } catch (err) {
+      alert("Error simulating push: " + err.message);
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
+  const handleDismiss = async () => {
+    if (!repo) return;
+    setPendingUpdate(null);
+    try {
+      await api.dismissUpdate(repo);
+    } catch (err) {
+      // non-critical
+    }
+  };
 
   const current = repos.find((r) => r.slug === repo);
 
@@ -52,6 +122,14 @@ export default function App() {
           </div>
         </div>
         <div className="topbar-right">
+          <button
+            className="btn-simulate-push"
+            onClick={handleSimulatePush}
+            disabled={isSimulating}
+            title="DevOps Live Demo: Simulate a developer pushing new code to GitHub"
+          >
+            {isSimulating ? "Pushing..." : "⚡ Simulate GitHub Push"}
+          </button>
           <RepoSelector repos={repos} value={repo} onChange={setRepo} />
           <span className={`status ${health ? "ok" : "down"}`}>
             <span className="dot" />
@@ -60,12 +138,56 @@ export default function App() {
               onChange={(e) => setActiveModel(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'inherit', font: 'inherit', outline: 'none', cursor: 'pointer' }}
             >
-              <option value="gemini-3.8-flash">gemini · gemini-3.8-flash</option>
+              <option value="gemini-3.5-flash">gemini · gemini-3.5-flash</option>
               <option value="qwen2.5-coder:7b">ollama · qwen2.5-coder:7b</option>
             </select>
           </span>
         </div>
       </header>
+
+      {/* 🔔 Live GitHub Update Notification Banner */}
+      {pendingUpdate && (
+        <div className="update-notification-banner">
+          <div className="update-banner-left">
+            <span className="update-bell">🔔</span>
+            <div className="update-text-block">
+              <div className="update-title">
+                <strong>New code pushed to GitHub:</strong> <code className="update-repo-badge">{pendingUpdate.slug || repo}</code>
+                {pendingUpdate.commit?.sha && <span className="update-sha">[{pendingUpdate.commit.sha.slice(0, 7)}]</span>}
+              </div>
+              <div className="update-commit-desc">
+                "{pendingUpdate.commit?.message || "New commit detected on remote"}"
+                {pendingUpdate.commit?.author && <span className="update-author"> · by {pendingUpdate.commit.author}</span>}
+              </div>
+            </div>
+          </div>
+
+          <div className="update-banner-actions">
+            <button 
+              className="sync-action-btn"
+              onClick={handleSync}
+              disabled={isSyncing}
+            >
+              {isSyncing ? "⏳ Syncing & Ingesting..." : "🔄 Refresh & Sync Knowledge Base"}
+            </button>
+            <button 
+              className="dismiss-banner-btn"
+              onClick={handleDismiss}
+              title="Dismiss notification"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sync Success Toast */}
+      {syncToast && (
+        <div className="sync-success-toast">
+          <span>✅ {syncToast}</span>
+          <button onClick={() => setSyncToast("")}>✕</button>
+        </div>
+      )}
 
       <nav className="tabs" role="tablist">
         {TABS.map((t) => (
@@ -90,7 +212,7 @@ export default function App() {
 
       <main>
         {error && <div className="alert error">{error}</div>}
-        {!error && repos.length === 0 && tab !== "eval" && (
+        {!error && repos.length === 0 && tab !== "eval" && tab !== "k8s" && (
           <div className="alert">
             No indexed repositories yet. Add your repos to <code>backend/repos.yaml</code> and run{" "}
             <code>python -m ingestion.run_ingestion --repo all</code>.
@@ -110,6 +232,7 @@ export default function App() {
           </>
         )}
         {tab === "eval" && <EvalDashboard />}
+        {tab === "k8s" && <KubernetesDashboard />}
       </main>
 
       {evidenceId && (

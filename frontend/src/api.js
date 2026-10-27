@@ -29,6 +29,14 @@ export const api = {
     request(`/evidence?repo=${encodeURIComponent(repo)}&id=${encodeURIComponent(id)}`),
   evalSummary: () => request("/eval/summary"),
   evalResults: () => request("/eval/results"),
+  checkUpdates: (slug) => request(`/repos/${slug}/check-updates`),
+  dismissUpdate: (slug) => request(`/repos/${slug}/dismiss-update`, { method: "POST" }),
+  simulatePush: (slug, body = {}) => request(`/repos/${slug}/simulate-push`, { method: "POST", body: JSON.stringify(body) }),
+  syncRepo: (slug) => request(`/repos/${slug}/sync`, { method: "POST" }),
+  k8sStatus: () => request("/k8s/status"),
+  k8sSimulateLoad: () => request("/k8s/simulate-load", { method: "POST" }),
+  k8sResetLoad: () => request("/k8s/reset-load", { method: "POST" }),
+  k8sManifests: () => request("/k8s/manifests"),
 };
 
 // Fixed order + fixed colour per condition (colour follows the condition, never its rank)
