@@ -115,8 +115,10 @@ export default function AnswerCard({ result, onCite, compact = false }) {
           {/* Pre-Query Guardrail Badge */}
           <div className="guardrail-badge-card input-guard">
             <div className="guardrail-badge-top">
-              <span className="badge-icon">🛡️</span>
-              <span className="badge-tag tag-pass">Input Guardrail: {guard.input?.status || "PASSED"}</span>
+              <span className="badge-icon">{guard.input?.status === "FLAGGED" ? "🚨" : (guard.input?.status === "WARNING" ? "⚠️" : "🛡️")}</span>
+              <span className={`badge-tag ${guard.input?.status === "FLAGGED" ? "tag-danger" : (guard.input?.status === "WARNING" ? "tag-warn" : "tag-pass")}`}>
+                Input Guardrail: {guard.input?.status || "PASSED"}
+              </span>
             </div>
             <div className="guardrail-badge-desc">
               ({guard.input?.summary || "No prompt injection detected · Code relevance: 98% · PII Clean"})
