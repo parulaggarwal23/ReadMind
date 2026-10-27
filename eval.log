@@ -1,0 +1,205 @@
+
+questions:   0%|          | 0/150 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s][A
+Loading weights: 100%|██████████| 199/199 [00:00<00:00, 2915.70it/s]
+
+
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s][A
+Loading weights: 100%|██████████| 201/201 [00:00<00:00, 2297.42it/s]
+
+questions:   1%|          | 1/150 [01:59<4:56:22, 119.35s/it]
+questions:   1%|▏         | 2/150 [02:10<2:17:06, 55.59s/it] 
+questions:   2%|▏         | 3/150 [02:20<1:25:43, 34.99s/it]
+questions:   3%|▎         | 4/150 [02:32<1:02:54, 25.85s/it]
+questions:   3%|▎         | 5/150 [02:42<48:21, 20.01s/it]  
+questions:   4%|▍         | 6/150 [02:53<41:12, 17.17s/it]
+questions:   5%|▍         | 7/150 [03:04<35:24, 14.86s/it]
+questions:   5%|▌         | 8/150 [03:12<30:23, 12.84s/it]
+questions:   6%|▌         | 9/150 [03:24<29:21, 12.49s/it]
+questions:   7%|▋         | 10/150 [03:34<27:40, 11.86s/it]
+questions:   7%|▋         | 11/150 [03:44<26:14, 11.33s/it]
+questions:   8%|▊         | 12/150 [03:54<25:04, 10.90s/it]
+questions:   9%|▊         | 13/150 [04:06<25:37, 11.22s/it]
+questions:   9%|▉         | 14/150 [04:17<25:05, 11.07s/it]
+questions:  10%|█         | 15/150 [04:26<23:39, 10.52s/it]
+questions:  11%|█         | 16/150 [04:36<23:01, 10.31s/it]
+questions:  11%|█▏        | 17/150 [04:46<22:40, 10.23s/it]
+questions:  12%|█▏        | 18/150 [04:56<22:17, 10.13s/it]
+judge failed for seL4__seL4-019 [llm_only]: 500 Server Error: Internal Server Error for url: http://127.0.0.1:11434/api/chat
+
+judge failed for seL4__seL4-019 [full_history]: 500 Server Error: Internal Server Error for url: http://127.0.0.1:11434/api/chat
+
+questions:  13%|█▎        | 19/150 [05:29<36:52, 16.89s/it]
+questions:  13%|█▎        | 20/150 [05:39<32:09, 14.84s/it]
+questions:  14%|█▍        | 21/150 [05:48<28:12, 13.12s/it]
+questions:  15%|█▍        | 22/150 [05:59<26:28, 12.41s/it]
+questions:  15%|█▌        | 23/150 [06:09<24:54, 11.77s/it]
+questions:  16%|█▌        | 24/150 [06:20<24:16, 11.56s/it]
+questions:  17%|█▋        | 25/150 [06:30<23:08, 11.11s/it]
+questions:  17%|█▋        | 26/150 [06:38<21:09, 10.24s/it]
+questions:  18%|█▊        | 27/150 [06:49<21:17, 10.38s/it]
+questions:  19%|█▊        | 28/150 [06:59<20:49, 10.24s/it]
+questions:  19%|█▉        | 29/150 [07:08<20:20, 10.08s/it]
+questions:  20%|██        | 30/150 [07:18<20:00, 10.00s/it]
+questions:  21%|██        | 31/150 [07:34<23:02, 11.62s/it]
+questions:  21%|██▏       | 32/150 [07:43<21:21, 10.86s/it]
+questions:  22%|██▏       | 33/150 [07:56<22:20, 11.46s/it]
+questions:  23%|██▎       | 34/150 [08:06<21:24, 11.07s/it]
+questions:  23%|██▎       | 35/150 [13:19<3:15:03, 101.77s/it]
+questions:  24%|██▍       | 36/150 [13:29<2:20:52, 74.15s/it] 
+questions:  25%|██▍       | 37/150 [13:38<1:43:04, 54.73s/it]
+KDE__kio-008 [full_history] failed: HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=300)
+
+questions:  25%|██▌       | 38/150 [28:52<9:43:02, 312.34s/it]
+questions:  26%|██▌       | 39/150 [29:02<6:49:58, 221.60s/it]
+questions:  27%|██▋       | 40/150 [29:12<4:50:08, 158.26s/it]
+questions:  27%|██▋       | 41/150 [29:20<3:25:50, 113.31s/it]
+questions:  28%|██▊       | 42/150 [29:29<2:27:08, 81.74s/it] 
+questions:  29%|██▊       | 43/150 [29:37<1:46:38, 59.80s/it]
+questions:  29%|██▉       | 44/150 [29:47<1:19:11, 44.83s/it]
+questions:  30%|███       | 45/150 [29:57<59:52, 34.21s/it]  
+questions:  31%|███       | 46/150 [30:07<46:48, 27.01s/it]
+questions:  31%|███▏      | 47/150 [35:20<3:13:54, 112.95s/it]
+questions:  32%|███▏      | 48/150 [35:28<2:18:38, 81.55s/it] 
+questions:  33%|███▎      | 49/150 [35:39<1:41:18, 60.19s/it]
+questions:  33%|███▎      | 50/150 [35:49<1:15:15, 45.16s/it]
+questions:  34%|███▍      | 51/150 [35:57<56:21, 34.16s/it]  
+questions:  35%|███▍      | 52/150 [36:06<43:23, 26.57s/it]
+questions:  35%|███▌      | 53/150 [36:16<34:48, 21.53s/it]
+questions:  36%|███▌      | 54/150 [36:30<30:36, 19.13s/it]
+questions:  37%|███▋      | 55/150 [36:41<26:49, 16.95s/it]
+questions:  37%|███▋      | 56/150 [36:54<24:32, 15.66s/it]
+questions:  38%|███▊      | 57/150 [37:10<24:27, 15.78s/it]
+questions:  39%|███▊      | 58/150 [37:20<21:31, 14.04s/it]
+questions:  39%|███▉      | 59/150 [37:29<19:07, 12.61s/it]
+questions:  40%|████      | 60/150 [37:41<18:26, 12.30s/it]
+questions:  41%|████      | 61/150 [37:56<19:34, 13.20s/it]
+questions:  41%|████▏     | 62/150 [43:11<2:32:07, 103.72s/it]
+questions:  42%|████▏     | 63/150 [43:22<1:49:51, 75.77s/it] 
+questions:  43%|████▎     | 64/150 [43:31<1:20:12, 55.96s/it]
+questions:  43%|████▎     | 65/150 [43:40<59:18, 41.87s/it]  
+questions:  44%|████▍     | 66/150 [43:51<45:18, 32.37s/it]
+questions:  45%|████▍     | 67/150 [44:00<35:20, 25.55s/it]
+questions:  45%|████▌     | 68/150 [44:10<28:18, 20.72s/it]
+questions:  46%|████▌     | 69/150 [44:20<23:37, 17.50s/it]
+questions:  47%|████▋     | 70/150 [44:30<20:24, 15.31s/it]
+questions:  47%|████▋     | 71/150 [44:38<17:25, 13.23s/it]
+actualbudget__actual-012 [code_only] failed: HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=300)
+
+questions:  48%|████▊     | 72/150 [59:53<6:08:38, 283.57s/it]
+questions:  49%|████▊     | 73/150 [1:00:02<4:18:15, 201.24s/it]
+questions:  49%|████▉     | 74/150 [1:00:12<3:02:14, 143.87s/it]
+questions:  50%|█████     | 75/150 [1:00:22<2:09:33, 103.65s/it]
+questions:  51%|█████     | 76/150 [1:00:33<1:33:52, 76.11s/it] 
+questions:  51%|█████▏    | 77/150 [1:00:43<1:08:13, 56.07s/it]
+questions:  52%|█████▏    | 78/150 [1:00:52<50:28, 42.07s/it]  
+judge failed for actualbudget__actual-019 [llm_only]: 500 Server Error: Internal Server Error for url: http://127.0.0.1:11434/api/chat
+
+questions:  53%|█████▎    | 79/150 [1:01:10<41:17, 34.89s/it]
+questions:  53%|█████▎    | 80/150 [1:01:20<31:52, 27.33s/it]
+questions:  54%|█████▍    | 81/150 [1:01:30<25:24, 22.10s/it]
+questions:  55%|█████▍    | 82/150 [1:01:40<21:00, 18.53s/it]
+questions:  55%|█████▌    | 83/150 [1:01:50<17:50, 15.98s/it]
+questions:  56%|█████▌    | 84/150 [1:02:00<15:25, 14.03s/it]
+questions:  57%|█████▋    | 85/150 [1:02:11<14:21, 13.26s/it]
+questions:  57%|█████▋    | 86/150 [1:02:20<12:43, 11.93s/it]
+questions:  58%|█████▊    | 87/150 [1:02:30<11:58, 11.40s/it]
+questions:  59%|█████▊    | 88/150 [1:02:40<11:27, 11.09s/it]
+questions:  59%|█████▉    | 89/150 [1:02:48<10:15, 10.10s/it]
+questions:  60%|██████    | 90/150 [1:02:59<10:25, 10.42s/it]
+questions:  61%|██████    | 91/150 [1:03:25<14:48, 15.05s/it]
+judge failed for infiniflow__ragflow-002 [code_only]: HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=300)
+
+questions:  61%|██████▏   | 92/150 [1:18:45<4:36:46, 286.32s/it]
+questions:  62%|██████▏   | 93/150 [1:18:56<3:13:33, 203.75s/it]
+questions:  63%|██████▎   | 94/150 [1:19:08<2:16:36, 146.37s/it]
+questions:  63%|██████▎   | 95/150 [1:19:18<1:36:45, 105.55s/it]
+questions:  64%|██████▍   | 96/150 [1:19:33<1:10:27, 78.28s/it] 
+questions:  65%|██████▍   | 97/150 [1:19:43<51:10, 57.93s/it]  
+questions:  65%|██████▌   | 98/150 [1:19:54<37:45, 43.57s/it]
+infiniflow__ragflow-009 [code_only] failed: HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=300)
+
+questions:  66%|██████▌   | 99/150 [1:35:07<4:18:56, 304.63s/it]
+questions:  67%|██████▋   | 100/150 [1:35:17<3:00:05, 216.11s/it]
+questions:  67%|██████▋   | 101/150 [1:35:28<2:06:18, 154.67s/it]
+questions:  68%|██████▊   | 102/150 [1:35:40<1:29:25, 111.78s/it]
+questions:  69%|██████▊   | 103/150 [1:35:50<1:03:43, 81.35s/it] 
+questions:  69%|██████▉   | 104/150 [1:36:01<46:05, 60.12s/it]  
+questions:  70%|███████   | 105/150 [1:36:10<33:33, 44.74s/it]
+questions:  71%|███████   | 106/150 [1:36:21<25:33, 34.85s/it]
+infiniflow__ragflow-017 [full_history] failed: HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=300)
+
+questions:  71%|███████▏  | 107/150 [1:51:35<3:33:50, 298.38s/it]
+questions:  72%|███████▏  | 108/150 [1:51:47<2:28:49, 212.61s/it]
+questions:  73%|███████▎  | 109/150 [1:51:58<1:43:49, 151.93s/it]
+questions:  73%|███████▎  | 110/150 [1:52:07<1:12:52, 109.30s/it]
+questions:  74%|███████▍  | 111/150 [1:52:16<51:28, 79.20s/it]   
+questions:  75%|███████▍  | 112/150 [1:52:27<37:11, 58.71s/it]
+questions:  75%|███████▌  | 113/150 [1:52:37<27:03, 43.88s/it]
+questions:  76%|███████▌  | 114/150 [1:52:47<20:19, 33.87s/it]
+questions:  77%|███████▋  | 115/150 [1:52:57<15:33, 26.66s/it]
+questions:  77%|███████▋  | 116/150 [1:53:07<12:12, 21.55s/it]
+questions:  78%|███████▊  | 117/150 [1:53:16<09:56, 18.06s/it]
+questions:  79%|███████▊  | 118/150 [1:53:27<08:27, 15.85s/it]
+questions:  79%|███████▉  | 119/150 [1:53:40<07:43, 14.94s/it]
+questions:  80%|████████  | 120/150 [1:53:51<06:51, 13.71s/it]
+CHERIoT-Platform__cheriot-rtos-001 [full_history] failed: HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=300)
+
+questions:  81%|████████  | 121/150 [2:09:05<2:17:11, 283.84s/it]
+questions:  81%|████████▏ | 122/150 [2:09:16<1:34:19, 202.11s/it]
+questions:  82%|████████▏ | 123/150 [2:09:26<1:04:58, 144.39s/it]
+questions:  83%|████████▎ | 124/150 [2:09:35<44:57, 103.74s/it]  
+questions:  83%|████████▎ | 125/150 [2:09:43<31:16, 75.07s/it] 
+questions:  84%|████████▍ | 126/150 [2:09:54<22:17, 55.72s/it]
+questions:  85%|████████▍ | 127/150 [2:10:04<16:05, 41.98s/it]
+questions:  85%|████████▌ | 128/150 [2:10:13<11:49, 32.26s/it]
+questions:  86%|████████▌ | 129/150 [2:10:24<09:00, 25.73s/it]
+questions:  87%|████████▋ | 130/150 [2:10:32<06:52, 20.60s/it]
+judge failed for CHERIoT-Platform__cheriot-rtos-011 [llm_only]: HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=300)
+
+questions:  87%|████████▋ | 131/150 [2:25:47<1:31:27, 288.79s/it]
+questions:  88%|████████▊ | 132/150 [2:31:02<1:29:02, 296.81s/it]
+questions:  89%|████████▊ | 133/150 [2:31:13<59:45, 210.90s/it]  
+questions:  89%|████████▉ | 134/150 [2:31:22<40:05, 150.33s/it]
+questions:  90%|█████████ | 135/150 [2:31:30<26:54, 107.65s/it]
+questions:  91%|█████████ | 136/150 [2:31:37<18:06, 77.60s/it] 
+questions:  91%|█████████▏| 137/150 [2:31:47<12:23, 57.18s/it]
+questions:  92%|█████████▏| 138/150 [2:31:56<08:33, 42.81s/it]
+questions:  93%|█████████▎| 139/150 [2:32:05<05:57, 32.52s/it]
+questions:  93%|█████████▎| 140/150 [2:32:20<04:32, 27.27s/it]
+questions:  94%|█████████▍| 141/150 [2:32:29<03:16, 21.80s/it]
+questions:  95%|█████████▍| 142/150 [2:32:37<02:21, 17.72s/it]
+questions:  95%|█████████▌| 143/150 [2:32:47<01:48, 15.51s/it]
+questions:  96%|█████████▌| 144/150 [2:32:55<01:19, 13.26s/it]
+questions:  97%|█████████▋| 145/150 [2:33:04<00:59, 11.83s/it]
+questions:  97%|█████████▋| 146/150 [2:33:13<00:43, 10.98s/it]
+questions:  98%|█████████▊| 147/150 [2:33:21<00:30, 10.21s/it]
+questions:  99%|█████████▊| 148/150 [2:33:31<00:20, 10.23s/it]
+questions:  99%|█████████▉| 149/150 [2:33:41<00:10, 10.07s/it]
+questions: 100%|██████████| 150/150 [2:33:51<00:00,  9.84s/it]
+questions: 100%|██████████| 150/150 [2:33:51<00:00, 61.54s/it]
+{
+  "llm_only": {
+    "accuracy": 3.2993,
+    "completeness": 0.7891,
+    "hallucination_rate": 0.2109,
+    "recall_at_k": null,
+    "latency_p50_ms": 681.8
+  },
+  "code_only": {
+    "accuracy": 2.3469,
+    "completeness": 0.2517,
+    "hallucination_rate": 0.6871,
+    "recall_at_k": 0.0,
+    "latency_p50_ms": 2698.35
+  },
+  "full_history": {
+    "accuracy": 3.0068,
+    "completeness": 0.3356,
+    "hallucination_rate": 0.6507,
+    "recall_at_k": 1.0,
+    "latency_p50_ms": 3097.5
+  }
+}
