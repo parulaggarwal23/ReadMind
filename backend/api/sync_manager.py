@@ -150,11 +150,14 @@ def simulate_github_push(slug: str, message: str = None, author: str = "Parul Ag
 
 
 def sync_repo_updates(slug: str) -> Dict[str, Any]:
-    """Apply pending updates into the repository index, increment stats, and update ChromaDB."""
+    """Apply pending GitHub updates into the repository index, increment stats, and update ChromaDB."""
     update_info = PENDING_UPDATES.get(slug)
     if not update_info or not update_info.get("has_updates"):
-        # If no pending update, create an incremental sync commit
-        update_info = simulate_github_push(slug, "sync: synchronize latest changes from GitHub main branch")
+        check = check_repo_updates(slug)
+        if check.get("has_updates"):
+            update_info = check
+        else:
+            return {"status": "up_to_date", "message": "Repository is already synchronized with latest GitHub commits."}
 
     commit = update_info["commit"]
     sha = commit["sha"]
@@ -163,26 +166,49 @@ def sync_repo_updates(slug: str) -> Dict[str, Any]:
     date_iso = commit["date"]
     url = commit.get("url", f"https://github.com/{slug.replace('__', '/')}/commit/{sha}")
 
+    # Fetch real files changed and diff patch from GitHub API if accessible
+    repo_gh = slug.replace("__", "/")
+    files_changed = []
+    diff_excerpt = ""
+    try:
+        headers = {"Accept": "application/vnd.github.v3+json"}
+        if GITHUB_TOKEN:
+            headers["Authorization"] = f"token {GITHUB_TOKEN}"
+        c_url = f"https://api.github.com/repos/{repo_gh}/commits/{sha}"
+        c_resp = requests.get(c_url, headers=headers, timeout=5)
+        if c_resp.status_code == 200:
+            c_data = c_resp.json()
+            raw_files = c_data.get("files", [])
+            files_changed = [f.get("filename") for f in raw_files if f.get("filename")][:10]
+            patches = [f.get("patch", "") for f in raw_files if f.get("patch")]
+            if patches:
+                diff_excerpt = "\n\nDiff excerpt:\n" + "\n".join(patches[:3])[:800]
+    except Exception:
+        pass
+
+    if not files_changed:
+        files_changed = ["README.md"]
+
     doc_id = f"commit:{sha}"
-    doc_text = f"Commit {sha} by {author} on {date_iso[:10]}\n\n{msg}\n\nFiles changed: auth/security.py, config.py\n\nDiff excerpt:\n+ // Enforce continuous synchronization and token rotation"
+    doc_text = f"Commit {sha} by {author} on {date_iso[:10]}\n\n{msg}\n\nFiles changed: {', '.join(files_changed)}{diff_excerpt}"
 
     new_doc = {
         "id": doc_id,
         "type": "commit",
         "title": msg,
         "date": date_iso,
-        "files": ["auth/security.py", "config.py"],
+        "files": files_changed,
         "url": url,
         "text": doc_text
     }
 
-    # 1. Prepend to docs.jsonl
+    # 1. Prepend to docs.jsonl (new commit added to top, ALL historical documents preserved)
     docs_file = INDEX_DIR / slug / "docs.jsonl"
     if docs_file.exists():
         existing_content = docs_file.read_text(encoding="utf-8")
         docs_file.write_text(json.dumps(new_doc, ensure_ascii=False) + "\n" + existing_content, encoding="utf-8")
 
-    # 2. Append to raw/commits.json
+    # 2. Append to raw/commits.json (ALL historical commits preserved)
     raw_commits_file = RAW_DIR / slug / "commits.json"
     if raw_commits_file.exists():
         try:
@@ -193,8 +219,8 @@ def sync_repo_updates(slug: str) -> Dict[str, Any]:
                 "author": author,
                 "date": date_iso,
                 "is_merge": False,
-                "files": [{"path": "auth/security.py", "change": "MODIFIED", "added": 12, "deleted": 2}],
-                "diff": "+ // Enforce continuous synchronization and token rotation"
+                "files": [{"path": f, "change": "MODIFIED"} for f in files_changed],
+                "diff": diff_excerpt.strip() or msg
             })
             raw_commits_file.write_text(json.dumps(commits_list, ensure_ascii=False), encoding="utf-8")
         except Exception:
@@ -227,17 +253,18 @@ def sync_repo_updates(slug: str) -> Dict[str, Any]:
     except Exception:
         pass
 
-    # Clear cached index so the next call loads the new commit immediately
+    # Clear cached index so the next call loads both old and new commits seamlessly
     get_index.cache_clear()
 
     # Clear pending status and advance baseline remote SHA
     PENDING_UPDATES.pop(slug, None)
     if sha:
+        DISMISSED_SHAS.add(sha)
         BASE_SEEN_REMOTE_SHA[slug] = sha
 
     return {
         "status": "success",
-        "message": f"Successfully synced commit {sha}: '{msg}'",
+        "message": f"Successfully synced commit {sha}: '{msg}' into Knowledge Base",
         "synced_commit": new_doc,
         "stats": updated_stats
     }

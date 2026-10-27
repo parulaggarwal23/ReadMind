@@ -33,7 +33,6 @@ export default function App() {
   const [pendingUpdate, setPendingUpdate] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncToast, setSyncToast] = useState("");
-  const [isSimulating, setIsSimulating] = useState(false);
 
   useEffect(() => {
     api.health().then(setHealth).catch(() => setHealth(null));
@@ -85,19 +84,6 @@ export default function App() {
     }
   };
 
-  const handleSimulatePush = async () => {
-    if (!repo || isSimulating) return;
-    setIsSimulating(true);
-    try {
-      const res = await api.simulatePush(repo);
-      setPendingUpdate(res);
-    } catch (err) {
-      alert("Error simulating push: " + err.message);
-    } finally {
-      setIsSimulating(false);
-    }
-  };
-
   const handleDismiss = async () => {
     if (!repo) return;
     setPendingUpdate(null);
@@ -125,14 +111,6 @@ export default function App() {
           </div>
         </div>
         <div className="topbar-right">
-          <button
-            className="btn-simulate-push"
-            onClick={handleSimulatePush}
-            disabled={isSimulating}
-            title="DevOps Live Demo: Simulate a developer pushing new code to GitHub"
-          >
-            {isSimulating ? "Pushing..." : "⚡ Simulate GitHub Push"}
-          </button>
           <RepoSelector repos={repos} value={repo} onChange={setRepo} />
           <span className={`status ${health ? "ok" : "down"}`}>
             <span className="dot" />
