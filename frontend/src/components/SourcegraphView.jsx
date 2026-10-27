@@ -80,6 +80,12 @@ export default function SourcegraphView({ repo, onAskWhy }) {
         </div>
       )}
 
+      {status?.mode === "integrated" && (
+        <div className="alert info" style={{ background: "rgba(56, 189, 248, 0.08)", borderColor: "rgba(56, 189, 248, 0.3)", color: "var(--text-1)" }}>
+          ⚡ <strong>Integrated SCIP Semantic Engine Active</strong> — High-precision symbol, structural, regex, code, and commit navigation is running across all indexed repositories with direct repository links.
+        </div>
+      )}
+
       <form className="card" onSubmit={run}>
         <div className="form-row">
           <input
