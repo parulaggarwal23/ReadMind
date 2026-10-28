@@ -9,8 +9,8 @@ from typing import Any, Dict, List
 
 # Patterns indicative of prompt injection, jailbreaks, or system prompt exfiltration
 INJECTION_PATTERNS = [
-    r"ignore\s+(all\s+|previous\s+|prior\s+)?(instructions|prompts|rules|commands)",
-    r"disregard\s+(all\s+|previous\s+|prior\s+)?(instructions|rules)",
+    r"ignore\s+(?:all\s+)?(?:the\s+)?(?:previous\s+|prior\s+)?(instructions?|prompts?|rules?|commands?)",
+    r"disregard\s+(?:all\s+)?(?:the\s+)?(?:previous\s+|prior\s+)?(instructions?|rules?)",
     r"system\s*prompt",
     r"jailbreak",
     r"\bDAN\b",
